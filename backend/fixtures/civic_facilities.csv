@@ -1,0 +1,13 @@
+id,name,kind,longitude,latitude,updated_at,access,summary,status,source_id
+fac-alder-library,Alder Library,Library,-75.741,45.448,2026-10-07T09:00:00Z,public,Fictional branch library with a community study room.,Open,src-civic
+fac-copper-rec,Copper Recreation Centre,Recreation,-75.775,45.397,2025-04-18T12:00:00Z,public,Fictional indoor recreation facility. Its register entry is stale.,Open,src-civic
+fac-juniper-clinic,Juniper Service Centre,Civic services,-75.71,45.431,2026-09-23T09:00:00Z,public,Fictional civic service counter and information desk.,Open,src-civic
+fac-harbor-transit,Harbor Transit Hub,Transit,-75.681,45.456,2026-10-03T10:00:00Z,public,Fictional transit interchange with a sheltered concourse.,Open,src-civic
+fac-northstar-depot,Northstar Works Depot,Public works,-75.652,45.423,2026-10-02T11:00:00Z,public,Fictional works depot. Two visible sources disagree about operational status.,Open,src-civic
+fac-meadow-hall,Meadow Assembly Hall,Community,-75.718,45.39,2026-09-29T08:00:00Z,public,Fictional community meeting and exhibition space.,Open,src-civic
+fac-eastbank-works,Eastbank Waterworks,Utilities,-75.615,45.415,2026-02-11T14:00:00Z,public,Fictional municipal utility site with an outdated register entry.,Maintenance,src-civic
+fac-lantern-shelter,Lantern Community Lodge,Community,-75.686,45.369,2025-10-15T09:00:00Z,public,Fictional community lodge. Its operating details need reconfirmation.,Open,src-civic
+fac-orchard-field,Orchard Playing Field,Recreation,-75.752,45.366,,public,Fictional sports field; the source provides no update timestamp.,Open,src-civic
+fac-summit-pump,Summit Pump Station,Utilities,-75.638,45.474,2026-09-30T07:00:00Z,public,Fictional utility facility at the north edge of the demonstration area.,Open,src-civic
+fac-mobile-unit,Mobile Service Unit,Civic services,,,2026-10-06T10:00:00Z,public,Fictional mobile counter. No stable coordinates were supplied; it is not shown on the map.,Scheduled,src-civic
+fac-canary-annex,Cobalt Annex [restricted],Operations,-75.604,45.358,2026-10-08T10:00:00Z,restricted,Original synthetic access-control canary NIMBUS-RESTRICTED-CANARY-947.,Limited access,src-restricted-register

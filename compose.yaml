@@ -1,0 +1,96 @@
+name: boreal
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: boreal
+      POSTGRES_USER: boreal_owner
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?Run python3 scripts/setup_env.py first}
+    volumes:
+      - boreal-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boreal_owner -d boreal"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    # No host port: PostgreSQL is reachable only on the private Compose network.
+    restart: unless-stopped
+
+  migrate:
+    image: postgis/postgis:16-3.4
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: boreal
+      PGUSER: boreal_owner
+      PGPASSWORD: ${DB_ADMIN_PASSWORD:?Run python3 scripts/setup_env.py first}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?Run python3 scripts/setup_env.py first}
+      DB_INGEST_PASSWORD: ${DB_INGEST_PASSWORD:?Run python3 scripts/setup_env.py first}
+    volumes:
+      - ./backend/migrations:/migrations:ro
+      - ./infra/migrate.sh:/migrate.sh:ro
+    entrypoint: ["sh", "/migrate.sh"]
+    restart: "no"
+
+  ingest:
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      INGEST_DATABASE_URL: postgresql://edip_ingest:${DB_INGEST_PASSWORD:?Run python3 scripts/setup_env.py first}@db:5432/boreal
+      AS_OF: ${AS_OF:-2026-10-11T12:00:00Z}
+    command: ["python", "-m", "app.ingest", "--fixtures", "/app/fixtures"]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://edip_app:${DB_APP_PASSWORD:?Run python3 scripts/setup_env.py first}@db:5432/boreal
+      AS_OF: ${AS_OF:-2026-10-11T12:00:00Z}
+      DEMO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DEMO_ALLOWED_ORIGINS: http://localhost:${BOREAL_PORT:-8080},http://127.0.0.1:${BOREAL_PORT:-8080}
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/web.Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BOREAL_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  verify:
+    profiles: ["verify"]
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+    depends_on:
+      ingest:
+        condition: service_completed_successfully
+    environment:
+      TEST_DATABASE_URL: postgresql://edip_app:${DB_APP_PASSWORD:?Run python3 scripts/setup_env.py first}@db:5432/boreal
+      TEST_INGEST_DATABASE_URL: postgresql://edip_ingest:${DB_INGEST_PASSWORD:?Run python3 scripts/setup_env.py first}@db:5432/boreal
+    command: ["python", "-m", "unittest", "tests.test_postgres", "-v"]
+    restart: "no"
+
+volumes:
+  boreal-data:

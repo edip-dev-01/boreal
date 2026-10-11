@@ -1,0 +1,144 @@
+{
+  "sources": [
+    {
+      "id": "src-civic",
+      "title": "Original synthetic civic facilities register",
+      "type": "synthetic-csv",
+      "license": "Unlicensed synthetic demo",
+      "synthetic": true,
+      "url": "/api/sources/src-civic",
+      "access": "public"
+    },
+    {
+      "id": "src-inspection",
+      "title": "Original synthetic October condition report",
+      "type": "synthetic-report",
+      "license": "Unlicensed synthetic demo",
+      "synthetic": true,
+      "url": "/api/sources/src-inspection",
+      "access": "public"
+    },
+    {
+      "id": "src-transit",
+      "title": "Original synthetic transit access note",
+      "type": "synthetic-report",
+      "license": "Unlicensed synthetic demo",
+      "synthetic": true,
+      "url": "/api/sources/src-transit",
+      "access": "public"
+    },
+    {
+      "id": "src-restricted-register",
+      "title": "Restricted synthetic register NIMBUS-RESTRICTED-CANARY-947",
+      "type": "synthetic-csv",
+      "license": "Unlicensed synthetic demo",
+      "synthetic": true,
+      "url": "/api/sources/src-restricted-register",
+      "access": "restricted"
+    },
+    {
+      "id": "src-restricted-memo",
+      "title": "Restricted synthetic memo NIMBUS-RESTRICTED-CANARY-947",
+      "type": "synthetic-report",
+      "license": "Unlicensed synthetic demo",
+      "synthetic": true,
+      "url": "/api/sources/src-restricted-memo",
+      "access": "restricted"
+    }
+  ],
+  "reports": [
+    {
+      "id": "report-northstar-condition",
+      "record_id": "fac-northstar-depot",
+      "source_id": "src-inspection",
+      "title": "Synthetic depot condition check",
+      "text": "Fictional exercise note: Northstar Works Depot is operating with limited service while a loading bay is maintained. This conflicts with the civic register status of Open. Neither source has been automatically chosen as authoritative.",
+      "observed_at": "2026-10-04T15:00:00Z",
+      "access": "public"
+    },
+    {
+      "id": "report-transit-access",
+      "record_id": "fac-harbor-transit",
+      "source_id": "src-transit",
+      "title": "Synthetic concourse access note",
+      "text": "Fictional exercise note: the transit concourse is open. The information desk links visitors to Juniper Service Centre. No real transport service is represented.",
+      "observed_at": "2026-10-05T10:00:00Z",
+      "access": "public"
+    },
+    {
+      "id": "report-alder-restricted",
+      "record_id": "fac-alder-library",
+      "source_id": "src-restricted-memo",
+      "title": "Restricted synthetic library memo",
+      "text": "NIMBUS-RESTRICTED-CANARY-947. Fictional analyst-only maintenance note attached to a public facility. This report must never be returned to the reader role.",
+      "observed_at": "2026-10-08T12:00:00Z",
+      "access": "restricted"
+    },
+    {
+      "id": "report-annex-restricted",
+      "record_id": "fac-canary-annex",
+      "source_id": "src-restricted-memo",
+      "title": "Restricted synthetic annex report",
+      "text": "NIMBUS-RESTRICTED-CANARY-947. Entirely invented operations context for permission-isolation testing.",
+      "observed_at": "2026-10-08T12:00:00Z",
+      "access": "restricted"
+    }
+  ],
+  "observations": [
+    {
+      "id": "obs-northstar-status",
+      "record_id": "fac-northstar-depot",
+      "source_id": "src-inspection",
+      "field": "status",
+      "value": "Limited service",
+      "observed_at": "2026-10-04T15:00:00Z",
+      "access": "public"
+    },
+    {
+      "id": "obs-alder-restricted-status",
+      "record_id": "fac-alder-library",
+      "source_id": "src-restricted-memo",
+      "field": "status",
+      "value": "Restricted maintenance hold NIMBUS-RESTRICTED-CANARY-947",
+      "observed_at": "2026-10-08T12:00:00Z",
+      "access": "restricted"
+    }
+  ],
+  "links": [
+    {
+      "id": "link-library-hall",
+      "from_id": "fac-alder-library",
+      "to_id": "fac-meadow-hall",
+      "label": "Nearby community space",
+      "access": "public"
+    },
+    {
+      "id": "link-hall-library",
+      "from_id": "fac-meadow-hall",
+      "to_id": "fac-alder-library",
+      "label": "Related library service",
+      "access": "public"
+    },
+    {
+      "id": "link-transit-civic",
+      "from_id": "fac-harbor-transit",
+      "to_id": "fac-juniper-clinic",
+      "label": "Civic information partner",
+      "access": "public"
+    },
+    {
+      "id": "link-library-annex",
+      "from_id": "fac-alder-library",
+      "to_id": "fac-canary-annex",
+      "label": "NIMBUS-RESTRICTED-CANARY-947 restricted counterpart",
+      "access": "restricted"
+    },
+    {
+      "id": "link-public-target-guard",
+      "from_id": "fac-meadow-hall",
+      "to_id": "fac-canary-annex",
+      "label": "NIMBUS-RESTRICTED-CANARY-947 target visibility guard",
+      "access": "public"
+    }
+  ]
+}
