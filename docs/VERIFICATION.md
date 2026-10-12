@@ -47,3 +47,21 @@ python scripts/browser_smoke.py --url http://127.0.0.1:8080
 The script covers desktop/mobile flows, local source links, filters, evidence Q&A, role switching, API failure/retry, session expiry, map availability, page exceptions and external requests. Screenshots are written under ignored `test-results/browser/`; inspect them before calling visual QA complete.
 
 `.github/workflows/ci.yml` runs application checks, a real Compose/PostGIS smoke, and the browser smoke after source publication. It retains only synthetic UI screenshots for seven days and requests read-only repository permissions. Creating the workflow is not evidence it has run.
+
+## Windows launcher verification
+
+The Windows launcher is `start-boreal.cmd`. Its inline commands target Windows PowerShell 5.1; there is no downloaded code, script-policy adjustment, administrator elevation, automatic tool installation, or database reset.
+
+`.github/workflows/windows-launcher.yml` runs dependency-free tests under Windows PowerShell 5.1 on `windows-latest`. It checks the exact embedded command's parser and `cmd.exe` entry point, Docker preflight and failure handling with mocks, credential creation/ACLs, byte-for-byte preservation of existing `.env`, local-only configuration, strict Boreal/PostgreSQL HTTP readiness, browser timing, and Windows checkout line endings. Docker and HTTP mocks do **not** prove that the Linux-container stack works on Docker Desktop.
+
+A separate Ubuntu job checks the Buildx JSON-listing command against real Docker tooling, including the selected builder's driver and endpoint. This validates the external CLI contract, not Windows Docker Desktop integration.
+
+Run the Windows tests from an already-approved PowerShell session with:
+
+```powershell
+& .\tests\windows_launcher.Tests.ps1
+```
+
+If your organization's policy does not permit local scripts, use the CI result or your administrator's approved process rather than changing the execution policy.
+
+Actual Windows Docker Desktop build/start, browser launch, and restart against a retained database still require manual testing on a Windows computer with Docker Desktop. The Linux Compose/PostGIS/browser CI remains the real-stack integration check. Creating the Windows workflow is not evidence of a test pass; check its result for the exact commit being reviewed.
