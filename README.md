@@ -14,7 +14,30 @@ An original geospatial discovery demonstrator: explore synthetic community facil
 - Deterministic evidence Q&A with supported question templates; **no LLM is used**
 - Local map geometry and bundled client code with no external map tiles, fonts, API keys, or model service
 
-## Start with Docker Compose
+## Easiest Windows start
+
+1. Install the current [Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/) if needed, then open it and wait for its engine to start. Boreal needs **Linux containers**.
+2. On this repository's GitHub page, choose **Code → Download ZIP**, then **Extract All** to a local folder. Keep the entire extracted folder together.
+3. Double-click **`start-boreal.cmd`** in that folder. The first build may take several minutes. Your browser opens only after Boreal and its database are ready.
+
+The launcher needs no Git, Python, administrator prompt, or PowerShell execution-policy change. It uses Windows PowerShell 5.1, included with Windows. If Windows or an organization policy blocks it, follow your administrator's approved process; do not disable security protections.
+
+The launcher checks Docker Desktop, creates unique disposable credentials only when `.env` is absent, and keeps an existing `.env` and database volume unchanged. New credentials are written with a Windows ACL granting access only to your current account. It never displays the credentials or raw configuration. Only local Docker contexts and their built-in Docker image builder are accepted; the UI stays on `127.0.0.1`. Builder selection applies only to this launch process, without changing your saved Docker settings. It uses the bundled `compose.yaml` and the `.env` beside the launcher, not Compose override files or inherited shell values for the demo's settings.
+
+Choose **Demo reader** or **Demo analyst** in the browser. Closing the launch window leaves the demo running. To stop without deleting data, open **Docker Desktop → Containers** and stop the **boreal** group. To start again, double-click the launcher in the **same folder**. Keep that folder's `.env` with your existing demo data.
+
+### Windows troubleshooting
+
+- **Docker missing or not ready:** install/open Docker Desktop, wait for its engine, then try again. Update Docker Desktop if Compose is missing/older than 2.20 or its builder checks fail. The builder check requires a recent Buildx with JSON listing support (0.27 or newer). If needed, use Docker Desktop's menu to switch to Linux containers.
+- **Remote context, custom builder, or custom `DOCKER_HOST`:** the launcher refuses remote Docker engines/builders. Select a local Docker Desktop context yourself, or ask your Docker administrator for help. It does not change your saved Docker settings.
+- **Port already in use:** edit only `BOREAL_PORT=8080` in `.env`, for example to `BOREAL_PORT=8081`, save, and launch again. Leave the three generated password lines unchanged. Do not share `.env`.
+- **Invalid or incomplete `.env`:** the launcher leaves it untouched. Check its required entries against `.env.example`; restore your original credentials if you already have a database. A missing `.env` alongside an existing Boreal data volume is deliberately blocked so that new credentials do not lock you out of your data.
+- **Build/startup or health timeout:** look at the **boreal** containers in Docker Desktop. Check available disk space, internet access for the first download, and the port. The launcher waits up to 180 seconds for container readiness after the build, then up to 90 seconds for Boreal's HTTP health check. It keeps the error window open and never resets your database. Rerunning the same launcher is safe.
+- **Browser did not open:** if the launcher says Boreal is ready, open the local address it prints manually.
+
+Startup messages show stages rather than raw Docker logs, which can contain configuration values. Review any container logs locally before sharing them.
+
+## Start with Docker Compose (other platforms or manual use)
 
 Prerequisites: Docker with the Compose v2 plugin, Python 3, and internet access for the initial image/dependency downloads. Application requests need no external services after the build.
 

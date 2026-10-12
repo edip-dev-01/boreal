@@ -1,0 +1,9 @@
+# The launcher runs in cmd.exe; the migration runs inside a Linux container.
+*.cmd text eol=crlf
+*.ps1 text eol=lf
+*.sh text eol=lf
+
+# These synthetic inputs/assets have byte-level SHA-256 checksums. Never let
+# core.autocrlf change them on checkout (including a Windows Git clone).
+backend/fixtures/* -text
+frontend/src/geography.ts text eol=lf

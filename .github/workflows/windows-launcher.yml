@@ -1,0 +1,59 @@
+name: Windows launcher
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows-powershell:
+    name: Windows PowerShell 5.1 (autocrlf=${{ matrix.autocrlf }})
+    runs-on: windows-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        autocrlf: ['false', 'true']
+    steps:
+      - name: Select checkout line endings
+        shell: powershell
+        run: git config --global core.autocrlf '${{ matrix.autocrlf }}'
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - name: Exercise launcher without Docker or extra dependencies
+        shell: powershell
+        run: |
+          if ($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) {
+            throw 'This job must exercise the Windows PowerShell 5.1 shipped with Windows.'
+          }
+          & .\tests\windows_launcher.Tests.ps1
+  docker-cli-contract:
+    name: Docker CLI JSON contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify real Buildx flags and local-builder JSON shape
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import subprocess
+
+          def docker(*args):
+              return subprocess.check_output(["docker", *args], text=True)
+
+          context = docker("context", "show").strip()
+          os.environ["BUILDX_BUILDER"] = context
+          os.environ["COMPOSE_BAKE"] = "false"
+          output = docker("--context", context, "buildx", "ls", "--format", "json")
+          builders = [json.loads(line) for line in output.splitlines() if line.strip()]
+          selected = [builder for builder in builders if builder.get("Name") == context]
+          assert len(selected) == 1, "Expected exactly one builder for the Docker context"
+          builder = selected[0]
+          assert builder.get("Driver") == "docker", "Expected the local Docker driver"
+          nodes = builder.get("Nodes", [])
+          assert len(nodes) == 1, "Expected a single-node context builder"
+          assert nodes[0].get("Endpoint") == context, "Builder endpoint must match the context"
+          print("PASS: real Buildx JSON-lines contract matches the launcher.")
+          PY
