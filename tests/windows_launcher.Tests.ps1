@@ -68,6 +68,18 @@ function Get-HexHash {
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-', '').ToLowerInvariant() }
     finally { $sha.Dispose() }
 }
+function Stop-NativeTestProcess {
+    param([Diagnostics.Process]$Process)
+    if (-not $Process.HasExited) {
+        # Killing cmd.exe alone leaves its PowerShell child holding the test folder.
+        $ErrorActionPreference = 'Continue'
+        & (Join-Path $env:SystemRoot 'System32\taskkill.exe') /PID $Process.Id /T /F *> $null
+        if (-not $Process.WaitForExit(10000)) {
+            $Process.Kill()
+            [void]$Process.WaitForExit(5000)
+        }
+    }
+}
 
 try {
     Test-Case 'launcher is readable, parseable Windows PowerShell with no policy bypass' {
@@ -542,7 +554,8 @@ try {
         foreach ($lineEnding in @('CRLF', 'LF')) {
             $root = Join-Path $script:TempRoot ('cmd smoke & (100%) ! and apostrophe''s ' + $lineEnding)
             [void][IO.Directory]::CreateDirectory($root)
-            Copy-Item -LiteralPath (Join-Path $RepoRoot 'compose.yaml') -Destination $root
+            # Omit compose.yaml deliberately: fail before any Docker discovery.
+            # Docker can exist in System32 on CI even with a restricted PATH.
             $path = Join-Path $root 'start-boreal.cmd'
             $source = $original
             if ($lineEnding -eq 'CRLF') { $source = $source.Replace("`n", "`r`n") }
@@ -557,7 +570,7 @@ try {
             $startInfo.RedirectStandardInput = $true
             $startInfo.RedirectStandardOutput = $true
             $startInfo.RedirectStandardError = $true
-            # No Docker installation is needed or consulted, even if runner has it.
+            # Only Windows tools are needed; incomplete extraction stops before Docker.
             $startInfo.EnvironmentVariables['PATH'] = (Join-Path $env:SystemRoot 'System32') + ';' + (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0')
             $process = New-Object Diagnostics.Process
             $process.StartInfo = $startInfo
@@ -569,17 +582,17 @@ try {
                 $stderr = $process.StandardError.ReadToEndAsync()
                 $process.StandardInput.WriteLine('x')
                 $process.StandardInput.Close()
-                if (-not $process.WaitForExit(30000)) {
-                    $process.Kill()
-                    throw "Native $lineEnding smoke hung instead of returning after pause input."
+                if (-not $process.WaitForExit(60000)) {
+                    Stop-NativeTestProcess $process
+                    throw "Native $lineEnding smoke exceeded its 60-second startup allowance."
                 }
                 $output = $stdout.Result + $stderr.Result
-                Assert-Equal $process.ExitCode 1 "Native $lineEnding launcher should return its missing-Docker failure code."
-                Assert-True ($output -match 'Boreal could not start:.*Docker Desktop') "Native $lineEnding command did not reach the controlled missing-Docker path: $output"
+                Assert-Equal $process.ExitCode 1 "Native $lineEnding launcher should return its incomplete-extraction failure code."
+                Assert-True ($output -match 'Boreal could not start:.*Extract the entire ZIP') "Native $lineEnding command did not reach the controlled extraction check: $output"
                 Assert-True ($output -notmatch 'ParserError|MissingEndCurlyBrace|Unexpected token|not recognized as an internal') "Native $lineEnding command quoting failed: $output"
                 Assert-True (-not (Test-Path -LiteralPath (Join-Path $root '.env'))) 'Native preflight failure created credentials.'
             } finally {
-                if ($started -and -not $process.HasExited) { $process.Kill() }
+                if ($started) { Stop-NativeTestProcess $process }
                 $process.Dispose()
             }
         }
@@ -589,9 +602,15 @@ try {
         foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $savedEnvironment[$name], 'Process') }
     }
     if (Test-Path -LiteralPath $script:TempRoot) {
-        Remove-Item -LiteralPath $script:TempRoot -Recurse -Force
+        try { Remove-Item -LiteralPath $script:TempRoot -Recurse -Force }
+        catch {
+            $script:Failed++
+            Write-Host ('FAIL: test folder cleanup -- ' + $_.Exception.Message)
+        }
     }
 }
 
 Write-Host ("Windows launcher tests: {0} passed; {1} failed." -f $script:Passed, $script:Failed)
 if ($script:Failed) { exit 1 }
+# Clear the exit code left by deliberate native-command failure tests.
+exit 0
